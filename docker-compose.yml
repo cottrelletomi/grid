@@ -1,0 +1,38 @@
+version: "3"
+services:
+  kafka:
+    container_name: grid-kafka
+    image: bitnami/kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+  rabbit:
+    container_name: grid-rabbit
+    image: rabbitmq:3.10-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  mongo:
+    container_name: grid-mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+  mysql:
+    container_name: grid-mysql
+    image: mysql
+    ports:
+      - "3306:3306"
+    command: --init-file /data/application/init.sql
+    volumes:
+      - ./user/init.sql:/data/application/init.sql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+  redis:
+    container_name: grid-redis
+    image: redis
+    ports:
+      - "6379:6379"

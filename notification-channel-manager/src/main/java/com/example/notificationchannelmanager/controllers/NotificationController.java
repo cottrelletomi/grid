@@ -5,13 +5,11 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.example.core.models.User;
 import org.example.core.models.UserRedis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +28,6 @@ public class NotificationController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotificationController.class);
 
-    private RabbitTemplate rabbitTemplate;
-
     private KafkaConsumer<String, User> kafkaConsumer;
 
     @Value("${user.url}")
@@ -48,8 +44,7 @@ public class NotificationController {
 
     private Map<String, Object> properties;
 
-    public NotificationController(RabbitTemplate rabbitTemplate, KafkaConsumer<String, User> kafkaConsumer, RestTemplateBuilder restTemplateBuilder, UserRedisRepository userRedisRepository) {
-        this.rabbitTemplate = rabbitTemplate;
+    public NotificationController(KafkaConsumer<String, User> kafkaConsumer, RestTemplateBuilder restTemplateBuilder, UserRedisRepository userRedisRepository) {
         this.kafkaConsumer = kafkaConsumer;
         this.kafkaConsumer.subscribe(Collections.singletonList("notification.topic"));
         this.restTemplate = restTemplateBuilder.build();

@@ -26,8 +26,7 @@ public class EmergencyListener {
 
     @KafkaListener(topics = "${user.topic.name}", containerFactory = "kafkaListenerContainerFactory")
     public void listener(User user) {
-        System.out.println("test: " + user);
-        //LOGGER.info(String.format("WARNING HR TOO HIGH ! Notification sent"));
+        LOGGER.info(String.format("User received -> %s", user.toString()));
         checkEmergency(user);
         this.heartRateLatch.countDown();
     }

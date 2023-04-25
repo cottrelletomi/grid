@@ -1,7 +1,6 @@
 package com.example.emergencynotificationagent.listener;
 
 import com.example.emergencynotificationagent.repositories.UserRedisRepository;
-import org.example.core.models.HeartRate;
 import org.example.core.models.User;
 import org.example.core.models.UserRedis;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 @Service
@@ -36,7 +34,7 @@ public class CoachAvailListener {
 
     @KafkaListener(topics = "${emergency.topic.name}", containerFactory = "kafkaListenerContainerFactory")
     public void listener(User user) {
-        System.out.println("Received user message: " + user);
+        LOGGER.info(String.format("User received -> %s", user.toString()));
         coachMobileNotifying(user);
         this.heartRateLatch.countDown();
     }
@@ -52,7 +50,7 @@ public class CoachAvailListener {
             LOGGER.info(String.format("%d coach(es) is(are) present in the gym", coach.size()));
             for(UserRedis c: coach) {
                 System.out.println(c);
-                kafkaTemplate.send(topicName, c.getId(), user);
+                kafkaTemplate.send(topicName, user);
                 //kafkaTemplate.send(topicName, Integer.parseInt(c.getId()), c.getId(), user);
                 //notificationProducer.sendMessage(user, "notification_coach_" + c.getId());
             }

@@ -32,8 +32,7 @@ public class UserListener {
 
     @KafkaListener(topics = "${hr.topic.name}", containerFactory = "kafkaListenerContainerFactory")
     public void listener(HeartRate heartRate) {
-        System.out.println("Received heartRate message: " + heartRate);
-        //LOGGER.info(String.format("WARNING HR TOO HIGH ! Notification sent"));
+        LOGGER.info(String.format("::UserListener:: Received message -> %s", heartRate.toString()));
         Optional<User> user = userService.getUserByEmail(heartRate.getEmail());
         if(user.isPresent()) {
             user.get().setHeartRate(heartRate.getHeart_rate());

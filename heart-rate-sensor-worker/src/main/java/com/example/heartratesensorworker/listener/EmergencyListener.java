@@ -26,7 +26,7 @@ public class EmergencyListener {
 
     @KafkaListener(topics = "${user.topic.name}", containerFactory = "kafkaListenerContainerFactory")
     public void listener(User user) {
-        LOGGER.info(String.format("User received -> %s", user.toString()));
+        LOGGER.info(String.format("::EmergencyListener:: Received message -> %s", user.toString()));
         checkEmergency(user);
         this.heartRateLatch.countDown();
     }

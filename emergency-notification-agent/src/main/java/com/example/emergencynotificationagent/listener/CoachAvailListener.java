@@ -34,7 +34,7 @@ public class CoachAvailListener {
 
     @KafkaListener(topics = "${emergency.topic.name}", containerFactory = "kafkaListenerContainerFactory")
     public void listener(User user) {
-        LOGGER.info(String.format("User received -> %s", user.toString()));
+        LOGGER.info(String.format("::CoachAvailListener:: Received message -> %s", user.toString()));
         coachMobileNotifying(user);
         this.heartRateLatch.countDown();
     }

@@ -1,34 +1,21 @@
 package com.example.notificationchannelmanager.controllers;
 
 import com.example.notificationchannelmanager.repositories.UserRedisRepository;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.example.core.models.User;
 import org.example.core.models.UserRedis;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 @RestController
 @RequestMapping("/api/v1/notification")
 public class NotificationController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(NotificationController.class);
-
-    private KafkaConsumer<String, User> kafkaConsumer;
 
     @Value("${user.url}")
     private String USER_URL;
@@ -37,35 +24,34 @@ public class NotificationController {
 
     private UserRedisRepository userRedisRepository;
 
-    private String bootstrapServers = "localhost:9092";
+    private CountDownLatch userLatch;
 
-    @Value("${spring.kafka.group-id}")
-    private String groupId;
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificationController.class);
 
-    private Map<String, Object> properties;
-
-    public NotificationController(KafkaConsumer<String, User> kafkaConsumer, RestTemplateBuilder restTemplateBuilder, UserRedisRepository userRedisRepository) {
-        this.kafkaConsumer = kafkaConsumer;
-        this.kafkaConsumer.subscribe(Collections.singletonList("notification.topic"));
+    public NotificationController(RestTemplateBuilder restTemplateBuilder, UserRedisRepository userRedisRepository) {
         this.restTemplate = restTemplateBuilder.build();
         this.userRedisRepository = userRedisRepository;
-
-        this.properties = new HashMap<>();
-        this.properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        this.properties.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        this.properties.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        this.properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        this.properties.put(JsonDeserializer.TRUSTED_PACKAGES, "org.example.core.models");
+        this.userLatch = new CountDownLatch(1);
     }
 
-//    @GetMapping("/{id}")
-//    public User notification(@PathVariable("id") int id) {
-//        LOGGER.info(String.format("Check notification -> notification_coach_%d", id));
-//        User user = (User) rabbitTemplate.receiveAndConvert("notification_coach_" + id);
-//        return user;
-//    }
+    private User user = null;
 
-    @GetMapping("/{partition}")
+    @KafkaListener(topics = "${notification.topic.name}", containerFactory = "kafkaListenerContainerFactory")
+    public void listener(User user) {
+        LOGGER.info(String.format("::NotificationController:: Received message -> %s", user.toString()));
+        this.user = user;
+        this.userLatch.countDown();
+    }
+
+    @GetMapping("/{id}")
+    public User notification(@PathVariable("id") int id) {
+        LOGGER.info(String.format("Check notification -> notification_coach_%d", id));
+        User u = this.user;
+        this.user = null;
+        return u;
+    }
+
+    /*@GetMapping("/{partition}")
     public ResponseEntity<User> getLastMessage(@PathVariable int partition) {
         ConsumerRecords<String, User> consumerRecords = kafkaConsumer.poll(Duration.ofMillis(1000));
 
@@ -75,28 +61,6 @@ public class NotificationController {
 
         ConsumerRecord<String, User> lastRecord = consumerRecords.iterator().next();
         return ResponseEntity.ok(lastRecord.value());
-    }
-
-    /*@GetMapping("/{id}")
-    public User notification(@PathVariable int id) {
-        // Assigner la partition au consommateur Kafka (id = partition)
-        KafkaConsumer<String, User> consumer = new KafkaConsumer<>(properties);
-        consumer.assign(Collections.singletonList(new TopicPartition("notification.topic", id)));
-
-        // Rechercher l'offset du dernier message dans la partition
-        consumer.seekToEnd(Collections.singletonList(new TopicPartition("notification.topic", id)));
-        long lastOffset = consumer.position(new TopicPartition("notification.topic", id));
-
-        // Lire le dernier message de la partition
-        consumer.seek(new TopicPartition("notification.topic", id), lastOffset - 1);
-        ConsumerRecords<String, User> consumerRecords = consumer.poll(Duration.ofMillis(1000));
-
-        if (consumerRecords.isEmpty()) {
-            return null;
-        }
-
-        ConsumerRecord<String, User> lastRecord = consumerRecords.iterator().next();
-        return lastRecord.value();
     }*/
 
 

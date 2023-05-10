@@ -1,6 +1,5 @@
 package com.example.heartratesensordatacollector.producers;
 
-import org.example.core.models.HeartRate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,14 +14,14 @@ public class HeartRateProducer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartRateProducer.class);
 
-    private KafkaTemplate<String, HeartRate> kafkaTemplate;
+    private KafkaTemplate<String, String> kafkaTemplate;
 
-    public HeartRateProducer(KafkaTemplate<String, HeartRate> kafkaTemplate) {
+    public HeartRateProducer(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendMessage(HeartRate heartRate) {
-        LOGGER.info(String.format("HeartRate sent -> %s", heartRate.toString()));
+    public void sendMessage(String heartRate) {
+        LOGGER.info(String.format("::HeartRateProducer:: HeartRate sent -> %s", heartRate));
         kafkaTemplate.send(topicName, heartRate);
     }
 }
